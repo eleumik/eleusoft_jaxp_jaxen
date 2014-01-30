@@ -1,4 +1,4 @@
-package org.eleusoft.jaxen.jaxp;
+package org.eleusoft.jaxp.jaxen;
 
 import java.io.StringReader;
 
@@ -8,6 +8,7 @@ import javax.xml.xpath.XPathFactory;
 
 import junit.framework.TestCase;
 
+import org.eleusoft.jaxp.jaxen.JaxenXPathFactory;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -28,8 +29,21 @@ public class TestJaxenJaxp extends TestCase
         XPathFactory f = getXPathFactory();
         assertNotNull(f);
         assertTrue(f.isObjectModelSupported(JaxenXPathFactory.URI));
-        
+        System.out.println("Test API JAXEN OK");
     }
+    public void testAPI_DOM()
+    {
+        XPathFactory f = getXPathFactory();
+        assertNotNull(f);
+        assertTrue(f.isObjectModelSupported(XPathConstants.DOM_OBJECT_MODEL));
+    }
+    public void testAPI_Unknown()
+    {
+        XPathFactory f = getXPathFactory();
+        assertFalse(f.isObjectModelSupported("kjhkhskhdkjsd"));
+    }
+    
+    
     public void testAPI_XPath() throws Exception
     {
         XPath xpath = getXPath();
