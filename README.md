@@ -7,10 +7,10 @@ This package is an implementation of the [JAXP](http://en.wikipedia.org/wiki/Jav
 
 Related Projects
 ----------------
+
 [eleusoft_jaxp_common](https://github.com/eleumik/eleusoft_jaxp_common) - JAXP XPath Common Package (dependency)
 
-
-[eleusoft_jaxp_tests](https://github.com/eleumik/eleusoft_jaxp_tests) - JAXP XPath Test Suite
+[eleusoft_jaxp_xpath_tests](https://github.com/eleumik/eleusoft_jaxp_xpath_tests) - JAXP XPath Test Suite
 
 [eleusoft_jaxp_jxpath](https://github.com/eleumik/eleusoft_jaxp_jxpath) - JAXP XPath for JXPath
 
