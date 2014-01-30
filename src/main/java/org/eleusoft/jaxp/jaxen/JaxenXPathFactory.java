@@ -1,10 +1,9 @@
-package org.eleusoft.jaxen.jaxp;
+package org.eleusoft.jaxp.jaxen;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -15,12 +14,15 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import javax.xml.xpath.XPathFactoryConfigurationException;
 import javax.xml.xpath.XPathFunction;
 import javax.xml.xpath.XPathFunctionException;
 import javax.xml.xpath.XPathFunctionResolver;
 import javax.xml.xpath.XPathVariableResolver;
 
+import org.eleusoft.jaxp.common.AbstractResolvers;
+import org.eleusoft.jaxp.common.AbstractXPathFactory;
+import org.eleusoft.jaxp.common.NodeListImpl;
+import org.eleusoft.jaxp.common.XPathValues;
 import org.jaxen.Context;
 import org.jaxen.FunctionCallException;
 import org.jaxen.FunctionContext;
@@ -41,54 +43,18 @@ import org.xml.sax.SAXException;
  * <p>The easiest option is to set a system property
  * with something like:
  * <p><pre>
- * -Djavax.xml.xpath.XPathFactory:http://www.jaxen.org=org.eleusoft.jaxen.jaxp.JaxenXPathFactory
+ * -Djavax.xml.xpath.XPathFactory:http://www.jaxen.org=org.eleusoft.jaxp.common.JaxenXPathFactory
  * </pre>
  * <p>
  * @author Michele Vivoda
  */
-public class JaxenXPathFactory extends XPathFactory
+public class JaxenXPathFactory extends AbstractXPathFactory
 {
     /**
      * URI of the Jaxen XPath object model.
      */
     public static final String URI =
         "http://www.jaxen.org";
-    /**
-     * Per - factory resolver.
-     */
-    private XPathVariableResolver variableResolver;
-    /**
-     * Per - factory resolver.
-     */
-    private XPathFunctionResolver functionResolver;
-    /**
-     * Whether secure processing is on.
-     */
-    private boolean secure;
-    /*
-     * (non-Javadoc)
-     * @see javax.xml.xpath.XPathFactory#getFeature(java.lang.String)
-     */
-    public boolean getFeature(final String name) throws XPathFactoryConfigurationException
-    {
-        if (name.equals(XMLConstants.FEATURE_SECURE_PROCESSING))
-        {
-            return this.secure;
-        }
-        else throw new  XPathFactoryConfigurationException("Unsupported feature:" + name);
-    }
-    /*
-     * (non-Javadoc)
-     * @see javax.xml.xpath.XPathFactory#setFeature(java.lang.String, boolean)
-     */
-    public void setFeature(final String name, final boolean arg1) throws XPathFactoryConfigurationException
-    {
-        if (name.equals(XMLConstants.FEATURE_SECURE_PROCESSING))
-        {
-            this.secure = arg1;
-        }
-        else throw new XPathFactoryConfigurationException("Unsupported feature:" + name);
-    }
     /*
      * (non-Javadoc)
      * @see javax.xml.xpath.XPathFactory#isObjectModelSupported(java.lang.String)
@@ -106,32 +72,12 @@ public class JaxenXPathFactory extends XPathFactory
     {
         return new XPathImpl(variableResolver, functionResolver, secure);
     }
-    /*
-     * (non-Javadoc)
-     * @see javax.xml.xpath.XPathFactory#setXPathFunctionResolver(javax.xml.xpath.XPathFunctionResolver)
-     */
-    public void setXPathFunctionResolver(final XPathFunctionResolver obj)
-    {
-        this.functionResolver = obj;
-    }
-    /*
-     * (non-Javadoc)
-     * @see javax.xml.xpath.XPathFactory#setXPathVariableResolver(javax.xml.xpath.XPathVariableResolver)
-     */
-    public void setXPathVariableResolver(final XPathVariableResolver obj)
-    {
-        this.variableResolver = obj;
-    }
     /**
      * Baseclass for {@link XPathImpl} and {@link XPathExpressionImpl}.
      */
-    private static class ResolversSupport
+    private static class ResolversSupport extends AbstractResolvers
     {
-        protected XPathVariableResolver variableResolver;
-        protected XPathFunctionResolver functionResolver;
-        protected NamespaceContext nsContext;
-        protected final boolean secure;
-
+        
         /**
          * Constructor for subclasses.
          * @param vr optional {@link XPathVariableResolver}
@@ -142,9 +88,7 @@ public class JaxenXPathFactory extends XPathFactory
                                    final XPathFunctionResolver fr,
                                    final boolean secure)
         {
-            this.variableResolver = vr;
-            this.functionResolver = fr;
-            this.secure = secure;
+            super(vr,fr,secure);
         }
         
         
@@ -158,22 +102,22 @@ public class JaxenXPathFactory extends XPathFactory
         {
             DOMXPath ctx = new DOMXPath(expression);
             // Functions
-            if (secure)
+            if (this.secure)
             {
                 ctx.setFunctionContext(SECUREFUNCTIONS);
             }
-            else if (functionResolver!=null)
+            else if (this.functionResolver!=null)
             {
-                ctx.setFunctionContext(new FunctionsImpl(ctx.getFunctionContext(), functionResolver, nsContext));
+                ctx.setFunctionContext(new FunctionsImpl(ctx.getFunctionContext(), this.functionResolver, nsContext));
             }
             // Ns Context
             if (nsContext!=null){
                 ctx.setNamespaceContext(new JaxenNamespaceContextAdapter(nsContext));
             }
             // Variables
-            if (variableResolver!=null)
+            if (this.variableResolver!=null)
             {
-                ctx.setVariableContext(new VariablesImpl(variableResolver, nsContext));
+                ctx.setVariableContext(new VariablesImpl(this.variableResolver, nsContext));
             }
             return ctx;
         }
@@ -194,58 +138,7 @@ public class JaxenXPathFactory extends XPathFactory
             }
             
         }
-        /*
-         * (non-Javadoc)
-         * @see javax.xml.xpath.XPath#getNamespaceContext()
-         */
-        public NamespaceContext getNamespaceContext()
-        {
-            return nsContext;
-        }
-        /*
-         * (non-Javadoc)
-         * @see javax.xml.xpath.XPath#getXPathFunctionResolver()
-         */
-        public XPathFunctionResolver getXPathFunctionResolver()
-        {
-            return functionResolver;
-        }
-        /*
-         * (non-Javadoc)
-         * @see javax.xml.xpath.XPath#getXPathVariableResolver()
-         */
-        public XPathVariableResolver getXPathVariableResolver()
-        {
-            return variableResolver;
-        }
-        /*
-         * (non-Javadoc)
-         * @see javax.xml.xpath.XPath#setNamespaceContext(javax.xml.namespace.NamespaceContext)
-         */
-        public void setNamespaceContext(final NamespaceContext ns)
-        {
-            if (ns==null) throw new NullPointerException("Null namespace context");
-            this.nsContext = ns;
-        }
-        /*
-         * (non-Javadoc)
-         * @see javax.xml.xpath.XPath#setXPathFunctionResolver(javax.xml.xpath.XPathFunctionResolver)
-         */
-        public void setXPathFunctionResolver(final XPathFunctionResolver resolver)
-        {
-            if (resolver==null) throw new NullPointerException("Null function resolver");
-            this.functionResolver = resolver;
-        }
-        /*
-         * (non-Javadoc)
-         * @see javax.xml.xpath.XPath#setXPathVariableResolver(javax.xml.xpath.XPathVariableResolver)
-         */
-        public void setXPathVariableResolver(final XPathVariableResolver resolver)
-        {
-            if (resolver==null) throw new NullPointerException("Null variable resolver");
-            this.variableResolver= resolver;
-
-        }
+        
 
         private static class VariablesImpl implements VariableContext
         {
@@ -403,7 +296,7 @@ public class JaxenXPathFactory extends XPathFactory
             try
             {
                 final org.jaxen.XPath  ce = newContext(expression);
-                return new XPathExpressionImpl(ce, expression, functionResolver, variableResolver, nsContext, secure);
+                return new XPathExpressionImpl(ce, expression, this.functionResolver, this.variableResolver, nsContext, this.secure);
             }
             catch(JaxenException e)
             {
@@ -464,7 +357,7 @@ public class JaxenXPathFactory extends XPathFactory
                                final InputSource source,
                                final QName returnType) throws XPathExpressionException
         {
-            return evaluate(expression, getDocument(source, secure), returnType);
+            return evaluate(expression, getDocument(source, this.secure), returnType);
         }
         /*
          * (non-Javadoc)
@@ -570,7 +463,7 @@ public class JaxenXPathFactory extends XPathFactory
          */
         public Object evaluate(final InputSource inputsource, final QName qname) throws XPathExpressionException
         {
-            return evaluate(getDocument(inputsource, secure), qname);
+            return evaluate(getDocument(inputsource, this.secure), qname);
         }
 
     }
